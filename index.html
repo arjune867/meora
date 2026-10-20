@@ -68,9 +68,9 @@
 (() => {
  const waNumber='6283890199339';
  const catalog=[
-  {name:'Papua Red Fruit Moisturizer',price:0},
-  {name:'MÉORA Bloom Serum',price:0},
-  {name:'Red Papua Fruit Balm',price:0}
+  {name:'Papua Red Fruit Moisturizer',price:null},
+  {name:'MÉORA Bloom Serum',price:null},
+  {name:'Red Papua Fruit Balm',price:null}
  ];
  const cart={};
  const rupiah=n=>'Rp'+Number(n).toLocaleString('id-ID');
@@ -83,8 +83,8 @@
   const entries=Object.entries(cart).filter(([,q])=>q>0);
   count.textContent=entries.reduce((s,[,q])=>s+q,0);
   if(!entries.length){items.innerHTML='<div class="cart-empty">Keranjang masih kosong. Pilih produk untuk mulai memesan.</div>';}
-  else items.innerHTML=entries.map(([name,q])=>{const p=catalog.find(x=>x.name===name);return '<div class="cart-item"><div><strong>'+name+'</strong><small>'+ (p.price>0?rupiah(p.price)+' / produk':'Harga dikonfirmasi admin')+'</small></div><div class="qty-control"><button type="button" data-change="-1" data-name="'+name+'" aria-label="Kurangi">−</button><b>'+q+'</b><button type="button" data-change="1" data-name="'+name+'" aria-label="Tambah">+</button></div></div>';}).join('');
-  total.textContent=rupiah(entries.reduce((s,[name,q])=>s+(catalog.find(p=>p.name===name).price*q),0));
+  else items.innerHTML=entries.map(([name,q])=>{const p=catalog.find(x=>x.name===name);return '<div class="cart-item"><div><strong>'+name+'</strong><small>'+ (Number.isFinite(p.price)&&p.price>0?rupiah(p.price)+' / produk':'Harga dikonfirmasi admin')+'</small></div><div class="qty-control"><button type="button" data-change="-1" data-name="'+name+'" aria-label="Kurangi">−</button><b>'+q+'</b><button type="button" data-change="1" data-name="'+name+'" aria-label="Tambah">+</button></div></div>';}).join('');
+  const known=entries.every(([name])=>Number.isFinite(catalog.find(p=>p.name===name).price)&&catalog.find(p=>p.name===name).price>0); total.textContent=known?rupiah(entries.reduce((s,[name,q])=>s+(catalog.find(p=>p.name===name).price*q),0)):'Konfirmasi harga';
   checkout.disabled=!entries.length;
  }
  document.querySelectorAll('[data-add]').forEach(btn=>btn.addEventListener('click',()=>{const n=btn.dataset.add;cart[n]=(cart[n]||0)+1;render();overlay.classList.add('open');}));
@@ -96,7 +96,7 @@
   const form=document.getElementById('orderForm');if(!form.reportValidity())return;
   const entries=Object.entries(cart).filter(([,q])=>q>0);if(!entries.length)return;
   const d=new FormData(form);
-  const lines=['*PESANAN MÉORA SKINCARE*','',...entries.map(([n,q])=>{const p=catalog.find(x=>x.name===n);return '• '+n+' x'+q+' — '+(p.price>0?rupiah(p.price*q):'Harga dikonfirmasi admin');}),'','*Total produk: '+rupiah(entries.reduce((s,[n,q])=>s+catalog.find(p=>p.name===n).price*q,0))+'*','', '*Nama:* '+d.get('name'),'*No. WhatsApp:* '+d.get('phone'),'*Alamat:* '+d.get('address'),'*Pengiriman:* '+d.get('shipping'),'*Voucher:* '+(d.get('voucher')||'-'),'*Pesan khusus:* '+(d.get('note')||'-'),'','Mohon konfirmasi stok, harga akhir, ongkir, dan cara pembayaran.'];
+  const lines=['*PESANAN MÉORA SKINCARE*','',...entries.map(([n,q])=>{const p=catalog.find(x=>x.name===n);return '• '+n+' x'+q+' — '+(Number.isFinite(p.price)&&p.price>0?rupiah(p.price*q):'Harga dikonfirmasi admin');}),'','*Total produk: '+(entries.every(([n])=>Number.isFinite(catalog.find(p=>p.name===n).price)&&catalog.find(p=>p.name===n).price>0)?rupiah(entries.reduce((s,[n,q])=>s+catalog.find(p=>p.name===n).price*q,0)):'Harga dikonfirmasi admin')+'*','', '*Nama:* '+d.get('name'),'*No. WhatsApp:* '+d.get('phone'),'*Alamat:* '+d.get('address'),'*Pengiriman:* '+d.get('shipping'),'*Voucher:* '+(d.get('voucher')||'-'),'*Pesan khusus:* '+(d.get('note')||'-'),'','Mohon konfirmasi stok, harga akhir, ongkir, dan cara pembayaran.'];
   window.open('https://wa.me/'+waNumber+'?text='+encodeURIComponent(lines.join('\n')),'_blank','noopener');
  });
  render();
